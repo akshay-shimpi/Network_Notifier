@@ -26,6 +26,8 @@ public class NetworkLayout extends View implements NetworkListener {
     private RelativeLayout relativeLayout;
     private TextView textView;
 
+    public static boolean haveNetworkConnection;
+
     public static NetworkListener networkListener;
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -33,7 +35,7 @@ public class NetworkLayout extends View implements NetworkListener {
         public void onReceive(Context context, Intent intent) {
             String Status = NetworkTracker.checkNetwork(context);
             if (Status.length() > 0) {
-                NetworkListener networkListener = (NetworkListener) NetworkLayout.networkListener;
+                NetworkListener networkListener = NetworkLayout.networkListener;
                 if (networkListener != null) {
                     networkListener.OnNetworkChanged(Status);
                 }
@@ -45,7 +47,7 @@ public class NetworkLayout extends View implements NetworkListener {
         super(context);
         this.context = context;
         this.ID = ID;
-        this.networkListener = this;
+        networkListener = this;
         if (context != null) {
             init();
             context.registerReceiver(broadcastReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
@@ -117,7 +119,7 @@ public class NetworkLayout extends View implements NetworkListener {
     }
 
     private boolean isVisible() {
-        return relativeLayout.getVisibility() == VISIBLE ? true : false;
+        return relativeLayout.getVisibility() == VISIBLE;
     }
 
     private void updateStatus(String status) {
