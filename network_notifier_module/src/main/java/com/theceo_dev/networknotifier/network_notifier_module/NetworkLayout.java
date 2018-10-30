@@ -19,6 +19,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NetworkLayout extends View implements NetworkListener {
     private Context context;
     private ViewGroup ID;
@@ -28,16 +31,17 @@ public class NetworkLayout extends View implements NetworkListener {
 
     public static boolean haveNetworkConnection;
 
-    public static NetworkListener networkListener;
+    public static List<NetworkListener> networkListeners = new ArrayList<>();
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String Status = NetworkTracker.checkNetwork(context);
             if (Status.length() > 0) {
-                NetworkListener networkListener = NetworkLayout.networkListener;
-                if (networkListener != null) {
-                    networkListener.OnNetworkChanged(Status);
+                for (NetworkListener networkListener : networkListeners) {
+                    if (networkListener != null) {
+                        networkListener.OnNetworkChanged(Status);
+                    }
                 }
             }
         }
@@ -45,9 +49,23 @@ public class NetworkLayout extends View implements NetworkListener {
 
     public NetworkLayout(Context context, ViewGroup ID) {
         super(context);
+        ListenerCleanUp();
         this.context = context;
         this.ID = ID;
-        networkListener = this;
+        networkListeners.add(this);
+        if (context != null) {
+            init();
+            context.registerReceiver(broadcastReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        }
+    }
+
+    public NetworkLayout(Context context, ViewGroup ID, NetworkListener networkListener) {
+        super(context);
+        ListenerCleanUp();
+        this.context = context;
+        this.ID = ID;
+        networkListeners.add(networkListener);
+        networkListeners.add(this);
         if (context != null) {
             init();
             context.registerReceiver(broadcastReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
@@ -118,10 +136,6 @@ public class NetworkLayout extends View implements NetworkListener {
         relativeLayout.setVisibility(GONE);
     }
 
-    private boolean isVisible() {
-        return relativeLayout.getVisibility() == VISIBLE;
-    }
-
     private void updateStatus(String status) {
         if (status.equals(NetworkTracker.MOBILE_WIFI)) {
             relativeLayout.setBackgroundColor(Color.parseColor("#008000"));
@@ -159,5 +173,9 @@ public class NetworkLayout extends View implements NetworkListener {
         if (!textView.getText().toString().equalsIgnoreCase(status)) {
             this.updateStatus(status);
         }
+    }
+
+    void ListenerCleanUp() {
+        networkListeners.clear();
     }
 }
